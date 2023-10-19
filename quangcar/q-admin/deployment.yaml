@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: quangcar-admin
+  namespace: devops-nhattien
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: quangcar-admin
+  template:
+    metadata:
+      labels:
+        app: quangcar-admin
+    spec:
+      imagePullSecrets:
+        - name: devops-nhattien
+      containers:
+        - name: quangcar-web-admin
+          image: artifactory.devops-nhattien.asia:26855/docker-local/quangcar/admin/development:latest
+          ports:
+            - containerPort: 80
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: Production
+          volumeMounts:
+            - name: user-content
+              mountPath: /app/wwwroot/user-content
+      volumes:
+        - name: user-content
+          persistentVolumeClaim:
+            claimName: pvc-quangcar-usercontent
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: quangcar-admin-service
+  namespace: devops-nhattien
+spec:
+  selector:
+    app: quangcar-admin
+  ports:
+    - name: quangcar-web-admin
+      targetPort: 80
+      port: 80
+      nodePort: 30920
+  type: NodePort
